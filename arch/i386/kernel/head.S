@@ -446,7 +446,7 @@ ALIGN
  *
  * NOTE! Make sure the gdt descriptor in head.S matches this if you
  * change anything.
- */
+ *///全局段描述符表内容，基地址全为0，即虚地址和线性地址相同，短的上线都是0xffffff，段长单位均为4KB,都是访问32位指令。
 ENTRY(gdt_table)
 	.quad 0x0000000000000000	/* NULL descriptor */
 	.quad 0x0000000000000000	/* not used */

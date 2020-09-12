@@ -104,7 +104,7 @@ extern unsigned long empty_zero_page[1024];
  */
 #ifndef __ASSEMBLY__
 #if CONFIG_X86_PAE
-# include <asm/pgtable-3level.h>
+# include <asm/pgtable-3level.h>    //PAE模式用三层映射
 #else
 # include <asm/pgtable-2level.h>
 #endif
@@ -159,7 +159,7 @@ extern unsigned long empty_zero_page[1024];
 #define _PAGE_BIT_PSE		7	/* 4 MB (or 2MB) page, Pentium+, if present.. */
 #define _PAGE_BIT_GLOBAL	8	/* Global TLB entry PPro+ */
 
-#define _PAGE_PRESENT	0x001
+#define _PAGE_PRESENT	0x001   //映射页面是否在内存中，不在则产生缺页中断
 #define _PAGE_RW	0x002
 #define _PAGE_USER	0x004
 #define _PAGE_PWT	0x008
@@ -245,7 +245,7 @@ extern unsigned long pg0[1024];
 extern void __handle_bad_pmd(pmd_t * pmd);
 extern void __handle_bad_pmd_kernel(pmd_t * pmd);
 
-#define pte_present(x)	((x).pte_low & (_PAGE_PRESENT | _PAGE_PROTNONE))
+#define pte_present(x)	((x).pte_low & (_PAGE_PRESENT | _PAGE_PROTNONE))//页表项不为0，但映射的物理内存是否在内存中
 #define pte_clear(xp)	do { set_pte(xp, __pte(0)); } while (0)
 
 #define pmd_none(x)	(!pmd_val(x))
@@ -266,9 +266,9 @@ extern void __handle_bad_pmd_kernel(pmd_t * pmd);
  */
 static inline int pte_read(pte_t pte)		{ return (pte).pte_low & _PAGE_USER; }
 static inline int pte_exec(pte_t pte)		{ return (pte).pte_low & _PAGE_USER; }
-static inline int pte_dirty(pte_t pte)		{ return (pte).pte_low & _PAGE_DIRTY; }
-static inline int pte_young(pte_t pte)		{ return (pte).pte_low & _PAGE_ACCESSED; }
-static inline int pte_write(pte_t pte)		{ return (pte).pte_low & _PAGE_RW; }
+static inline int pte_dirty(pte_t pte)		{ return (pte).pte_low & _PAGE_DIRTY; }//该页面是藏的
+static inline int pte_young(pte_t pte)		{ return (pte).pte_low & _PAGE_ACCESSED; }//该页刚被使用过
+static inline int pte_write(pte_t pte)		{ return (pte).pte_low & _PAGE_RW; }//该页面是可写的
 
 static inline pte_t pte_rdprotect(pte_t pte)	{ (pte).pte_low &= ~_PAGE_USER; return pte; }
 static inline pte_t pte_exprotect(pte_t pte)	{ (pte).pte_low &= ~_PAGE_USER; return pte; }

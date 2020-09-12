@@ -134,7 +134,7 @@ struct vm_operations_struct {
 typedef struct page {
 	struct list_head list;
 	struct address_space *mapping;
-	unsigned long index;
+	unsigned long index;   //当页面内容来自文件，代表该页面在文件中的序号，当页面内容被交换出到交换设备上，但还是保留着内容作为缓冲时，则index指明了页面的去向
 	struct page *next_hash;
 	atomic_t count;
 	unsigned long flags;	/* atomic flags, some possibly updated asynchronously */

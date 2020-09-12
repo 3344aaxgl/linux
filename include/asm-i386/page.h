@@ -78,7 +78,7 @@ typedef struct { unsigned long pgprot; } pgprot_t;
  * and CONFIG_HIGHMEM64G options in the kernel configuration.
  */
 
-#define __PAGE_OFFSET		(0xC0000000)
+#define __PAGE_OFFSET		(0xC0000000)   //内核有1G的内存空间
 
 #ifndef __ASSEMBLY__
 
@@ -112,9 +112,9 @@ extern __inline__ int get_order(unsigned long size)
 #endif /* __ASSEMBLY__ */
 
 #define PAGE_OFFSET		((unsigned long)__PAGE_OFFSET)
-#define __pa(x)			((unsigned long)(x)-PAGE_OFFSET)
-#define __va(x)			((void *)((unsigned long)(x)+PAGE_OFFSET))
-#define virt_to_page(kaddr)	(mem_map + (__pa(kaddr) >> PAGE_SHIFT))
+#define __pa(x)			((unsigned long)(x)-PAGE_OFFSET)     //物理地址总是从最低的0开始，由虚拟地址得到物理地址
+#define __va(x)			((void *)((unsigned long)(x)+PAGE_OFFSET)) //由物理地址得到虚拟地址
+#define virt_to_page(kaddr)	(mem_map + (__pa(kaddr) >> PAGE_SHIFT)) //由虚拟地址的到物理页的page数据结构
 #define VALID_PAGE(page)	((page - mem_map) < max_mapnr)
 
 

@@ -41,7 +41,7 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next, str
 #endif
 		set_bit(cpu, &next->cpu_vm_mask);
 		/* Re-load page tables */
-		asm volatile("movl %0,%%cr3": :"r" (__pa(next->pgd)));
+		asm volatile("movl %0,%%cr3": :"r" (__pa(next->pgd)));   //先得到下一个进程的目录起始物理地址，然后将其写入寄存器CR3
 	}
 #ifdef CONFIG_SMP
 	else {

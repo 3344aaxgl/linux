@@ -26,7 +26,7 @@ typedef struct zone_struct {
 	 * Commonly accessed fields:
 	 */
 	spinlock_t		lock;
-	unsigned long		offset;
+	unsigned long		offset;     //起始页号
 	unsigned long		free_pages;
 	unsigned long		inactive_clean_pages;
 	unsigned long		inactive_dirty_pages;
@@ -36,7 +36,7 @@ typedef struct zone_struct {
 	 * free areas of different sizes
 	 */
 	struct list_head	inactive_clean_list;
-	free_area_t		free_area[MAX_ORDER];
+	free_area_t		free_area[MAX_ORDER];   //空闲区，按块大小组成的队列，最多2^MAX_ORDER个页面
 
 	/*
 	 * rarely used fields:

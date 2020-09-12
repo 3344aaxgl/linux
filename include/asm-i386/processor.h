@@ -258,7 +258,7 @@ extern unsigned int mca_pentium_flag;
 /*
  * User space process size: 3GB (default).
  */
-#define TASK_SIZE	(PAGE_OFFSET)
+#define TASK_SIZE	(PAGE_OFFSET)     //用户空间上限
 
 /* This decides where the kernel will search for a free chunk of vm
  * space during mmap's.
@@ -404,7 +404,7 @@ struct thread_struct {
 	0, INVALID_IO_BITMAP_OFFSET, /* tace, bitmap */		\
 	{~0, } /* ioperm */					\
 }
-
+//设置段寄存器，linux只分代码段和数据段
 #define start_thread(regs, new_eip, new_esp) do {		\
 	__asm__("movl %0,%%fs ; movl %0,%%gs": :"r" (0));	\
 	set_fs(USER_DS);					\
