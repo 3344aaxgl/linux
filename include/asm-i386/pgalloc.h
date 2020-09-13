@@ -119,20 +119,20 @@ extern inline pte_t * pte_alloc_kernel(pmd_t * pmd, unsigned long address)
 
 extern inline pte_t * pte_alloc(pmd_t * pmd, unsigned long address)
 {
-	address = (address >> PAGE_SHIFT) & (PTRS_PER_PTE - 1);
+	address = (address >> PAGE_SHIFT) & (PTRS_PER_PTE - 1);//所属页面表下表
 
-	if (pmd_none(*pmd))
+	if (pmd_none(*pmd))//pmd目录项为空
 		goto getnew;
 	if (pmd_bad(*pmd))
 		goto fix;
 	return (pte_t *)pmd_page(*pmd) + address;
 getnew:
 {
-	unsigned long page = (unsigned long) get_pte_fast();
+	unsigned long page = (unsigned long) get_pte_fast();//释放一个页面表时，内核将释放的页面表先保存在一个缓冲池中，而不见其物理内存页释放
 	
 	if (!page)
-		return get_pte_slow(pmd, address);
-	set_pmd(pmd, __pmd(_PAGE_TABLE + __pa(page)));
+		return get_pte_slow(pmd, address);//分配一个物理页用作页面表
+	set_pmd(pmd, __pmd(_PAGE_TABLE + __pa(page)));//设置pmd
 	return (pte_t *)page + address;
 }
 fix:

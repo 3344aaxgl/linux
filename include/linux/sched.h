@@ -200,14 +200,14 @@ struct files_struct {
 /* Number of map areas at which the AVL tree is activated. This is arbitrary. */
 #define AVL_MIN_MAP_COUNT	32
 
-struct mm_struct {
-	struct vm_area_struct * mmap;		/* list of VMAs */
-	struct vm_area_struct * mmap_avl;	/* tree of VMAs */
-	struct vm_area_struct * mmap_cache;	/* last find_vma result */
-	pgd_t * pgd;
+struct mm_struct {//一个进程只有一个mm_struct结构，一个mm_struct结构却可能为多个进程所共享
+	struct vm_area_struct * mmap;		/* list of VMAs */   //虚存结构结构单链线性队列
+	struct vm_area_struct * mmap_avl;	/* tree of VMAs */   //AVL树
+	struct vm_area_struct * mmap_cache;	/* last find_vma result *///指向最近一次用到的虚存区间结构
+	pgd_t * pgd;				//指向该进程的页面目录，当进程进入运行时，就将这个指针转换成物理地址，并写入控制寄存器CR3
 	atomic_t mm_users;			/* How many users with user space? */
 	atomic_t mm_count;			/* How many references to "struct mm_struct" (users count as 1) */
-	int map_count;				/* number of VMAs */
+	int map_count;				/* number of VMAs */  //有多少个虚存结构
 	struct semaphore mmap_sem;
 	spinlock_t page_table_lock;
 

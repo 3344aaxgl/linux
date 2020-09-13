@@ -1061,9 +1061,9 @@ static int do_swap_page(struct mm_struct * mm,
 static int do_anonymous_page(struct mm_struct * mm, struct vm_area_struct * vma, pte_t *page_table, int write_access, unsigned long addr)
 {
 	struct page *page = NULL;
-	pte_t entry = pte_wrprotect(mk_pte(ZERO_PAGE(addr), vma->vm_page_prot));
-	if (write_access) {
-		page = alloc_page(GFP_HIGHUSER);
+	pte_t entry = pte_wrprotect(mk_pte(ZERO_PAGE(addr), vma->vm_page_prot));//只允许读，一律映射到同一个物理内存页面empty_zero_page,内容为0
+	if (write_access) {//写操作
+		page = alloc_page(GFP_HIGHUSER);//分配用户空间
 		if (!page)
 			return -1;
 		clear_user_highpage(page, addr);
@@ -1071,7 +1071,7 @@ static int do_anonymous_page(struct mm_struct * mm, struct vm_area_struct * vma,
 		mm->rss++;
 		flush_page_to_ram(page);
 	}
-	set_pte(page_table, entry);
+	set_pte(page_table, entry);//设置PTE
 	/* No need to invalidate - it was non-present before */
 	update_mmu_cache(vma, addr, entry);
 	return 1;	/* Minor fault */
@@ -1162,14 +1162,14 @@ static inline int handle_pte_fault(struct mm_struct *mm,
 	 */
 	spin_lock(&mm->page_table_lock);
 	entry = *pte;
-	if (!pte_present(entry)) {
+	if (!pte_present(entry)) {//页面不在内存中
 		/*
 		 * If it truly wasn't present, we know that kswapd
 		 * and the PTE updates will not touch it later. So
 		 * drop the lock.
 		 */
 		spin_unlock(&mm->page_table_lock);
-		if (pte_none(entry))
+		if (pte_none(entry))//已经分配页表项
 			return do_no_page(mm, vma, address, write_access, pte);
 		return do_swap_page(mm, vma, address, pte, pte_to_swp_entry(entry), write_access);
 	}
@@ -1196,13 +1196,13 @@ int handle_mm_fault(struct mm_struct *mm, struct vm_area_struct * vma,
 	pgd_t *pgd;
 	pmd_t *pmd;
 
-	pgd = pgd_offset(mm, address);
-	pmd = pmd_alloc(pgd, address);
+	pgd = pgd_offset(mm, address);//得到属于哪个PGD
+	pmd = pmd_alloc(pgd, address);//分配PMD
 
 	if (pmd) {
 		pte_t * pte = pte_alloc(pmd, address);
 		if (pte)
-			ret = handle_pte_fault(mm, vma, address, write_access, pte);
+			ret = handle_pte_fault(mm, vma, address, write_access, pte);//分配物理内存
 	}
 	return ret;
 }

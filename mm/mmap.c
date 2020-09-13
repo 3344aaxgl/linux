@@ -410,15 +410,15 @@ struct vm_area_struct * find_vma(struct mm_struct * mm, unsigned long addr)
 		/* Check the cache first. */
 		/* (Cache hit rate is typically around 35%.) */
 		vma = mm->mmap_cache;
-		if (!(vma && vma->vm_end > addr && vma->vm_start <= addr)) {
-			if (!mm->mmap_avl) {
+		if (!(vma && vma->vm_end > addr && vma->vm_start <= addr)) {//判断要找的虚拟地址是不是在最近访问的区间中
+			if (!mm->mmap_avl) {//没有AVL树
 				/* Go through the linear list. */
-				vma = mm->mmap;
+				vma = mm->mmap;//遍历链表
 				while (vma && vma->vm_end <= addr)
 					vma = vma->vm_next;
 			} else {
 				/* Then go through the AVL tree quickly. */
-				struct vm_area_struct * tree = mm->mmap_avl;
+				struct vm_area_struct * tree = mm->mmap_avl;//查找AVL树
 				vma = NULL;
 				for (;;) {
 					if (tree == vm_avl_empty)
@@ -432,8 +432,8 @@ struct vm_area_struct * find_vma(struct mm_struct * mm, unsigned long addr)
 						tree = tree->vm_avl_right;
 				}
 			}
-			if (vma)
-				mm->mmap_cache = vma;
+			if (vma)//找到了
+				mm->mmap_cache = vma;//更新最近一次访问的cache
 		}
 	}
 	return vma;
@@ -919,8 +919,8 @@ void __insert_vm_struct(struct mm_struct *mm, struct vm_area_struct *vmp)
 	struct vm_area_struct **pprev;
 	struct file * file;
 
-	if (!mm->mmap_avl) {
-		pprev = &mm->mmap;
+	if (!mm->mmap_avl) {//没有avl树
+		pprev = &mm->mmap;//插入链表
 		while (*pprev && (*pprev)->vm_start <= vmp->vm_start)
 			pprev = &(*pprev)->vm_next;
 	} else {
@@ -934,7 +934,7 @@ void __insert_vm_struct(struct mm_struct *mm, struct vm_area_struct *vmp)
 	*pprev = vmp;
 
 	mm->map_count++;
-	if (mm->map_count >= AVL_MIN_MAP_COUNT && !mm->mmap_avl)
+	if (mm->map_count >= AVL_MIN_MAP_COUNT && !mm->mmap_avl)//大于32个区间时，创建AVL树
 		build_mmap_avl(mm);
 
 	file = vmp->vm_file;
@@ -960,8 +960,8 @@ void __insert_vm_struct(struct mm_struct *mm, struct vm_area_struct *vmp)
 
 void insert_vm_struct(struct mm_struct *mm, struct vm_area_struct *vmp)
 {
-	lock_vma_mappings(vmp);
-	spin_lock(&current->mm->page_table_lock);
+	lock_vma_mappings(vmp);//对虚拟区间加锁
+	spin_lock(&current->mm->page_table_lock);//对整个虚存空间的mm_struct加锁
 	__insert_vm_struct(mm, vmp);
 	spin_unlock(&current->mm->page_table_lock);
 	unlock_vma_mappings(vmp);

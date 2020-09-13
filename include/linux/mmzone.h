@@ -46,7 +46,7 @@ typedef struct zone_struct {
 	/*
 	 * Discontig memory support fields.
 	 */
-	struct pglist_data	*zone_pgdat;
+	struct pglist_data	*zone_pgdat;     //指向所属的pglist_data结构
 	unsigned long		zone_start_paddr;
 	unsigned long		zone_start_mapnr;
 	struct page		*zone_mem_map;
@@ -77,9 +77,9 @@ typedef struct zonelist_struct {
 
 struct bootmem_data;
 typedef struct pglist_data {
-	zone_t node_zones[MAX_NR_ZONES];
-	zonelist_t node_zonelists[NR_GFPINDEX];
-	struct page *node_mem_map;
+	zone_t node_zones[MAX_NR_ZONES];//最多3个页面管理区
+	zonelist_t node_zonelists[NR_GFPINDEX];//256分配页面策略
+	struct page *node_mem_map;//指向具体节点的page结构数组
 	unsigned long *valid_addr_bitmap;
 	struct bootmem_data *bdata;
 	unsigned long node_start_paddr;

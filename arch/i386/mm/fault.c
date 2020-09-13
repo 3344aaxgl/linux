@@ -100,7 +100,7 @@ extern unsigned long idt;
  *
  * error_code:
  *	bit 0 == 0 means no page found, 1 means protection fault
- *	bit 1 == 0 means read, 1 means write
+ *	bit 1 == 0 means read, 1 means write 
  *	bit 2 == 0 means kernel, 1 means user-mode
  */
 asmlinkage void do_page_fault(struct pt_regs *regs, unsigned long error_code)
@@ -115,9 +115,9 @@ asmlinkage void do_page_fault(struct pt_regs *regs, unsigned long error_code)
 	siginfo_t info;
 
 	/* get the address */
-	__asm__("movl %%cr2,%0":"=r" (address));
+	__asm__("movl %%cr2,%0":"=r" (address));//i386cpu产生页错误异常时，CPU将导致映射失败的线性地址放在控制街村企CR2中
 
-	tsk = current;
+	tsk = current;   //通过宏操作取得当前进程的task_struct结构的地址
 
 	/*
 	 * We fault-in kernel-space virtual memory on-demand. The
@@ -128,36 +128,36 @@ asmlinkage void do_page_fault(struct pt_regs *regs, unsigned long error_code)
 	 * only copy the information from the master page table,
 	 * nothing more.
 	 */
-	if (address >= TASK_SIZE)
+	if (address >= TASK_SIZE)//大于用户空间上限
 		goto vmalloc_fault;
 
-	mm = tsk->mm;
+	mm = tsk->mm;   //mm_struct结构
 	info.si_code = SEGV_MAPERR;
 
 	/*
 	 * If we're in an interrupt or have no user
 	 * context, we must not take the fault..
 	 */
-	if (in_interrupt() || !mm)
+	if (in_interrupt() || !mm)//中断状态或者mm为空
 		goto no_context;
 
-	down(&mm->mmap_sem);
+	down(&mm->mmap_sem);//互斥
 
-	vma = find_vma(mm, address);
+	vma = find_vma(mm, address);//找虚存区
 	if (!vma)
 		goto bad_area;
-	if (vma->vm_start <= address)
+	if (vma->vm_start <= address)//找到
 		goto good_area;
-	if (!(vma->vm_flags & VM_GROWSDOWN))
+	if (!(vma->vm_flags & VM_GROWSDOWN))//如果落在堆栈区要有标志位VM_GROWSDOWN
 		goto bad_area;
-	if (error_code & 4) {
+	if (error_code & 4) {//用户空间
 		/*
 		 * accessing the stack below %esp is always a bug.
 		 * The "+ 32" is there due to some instructions (like
 		 * pusha) doing post-decrement on the stack and that
 		 * doesn't show up until later..
 		 */
-		if (address + 32 < regs->esp)
+		if (address + 32 < regs->esp)//一般压入堆栈4个字节，pusha一次压入32个字节
 			goto bad_area;
 	}
 	if (expand_stack(vma, address))
@@ -169,22 +169,22 @@ asmlinkage void do_page_fault(struct pt_regs *regs, unsigned long error_code)
 good_area:
 	info.si_code = SEGV_ACCERR;
 	write = 0;
-	switch (error_code & 3) {
+	switch (error_code & 3) {//写操作
 		default:	/* 3: write, present */
 #ifdef TEST_VERIFY_AREA
-			if (regs->cs == KERNEL_CS)
+			if (regs->cs == KERNEL_CS)//代码寄存器是内存代码寄存器
 				printk("WP fault at %08lx\n", regs->eip);
 #endif
 			/* fall through */
 		case 2:		/* write, not present */
-			if (!(vma->vm_flags & VM_WRITE))
+			if (!(vma->vm_flags & VM_WRITE))//不在内存中，没有可写标识
 				goto bad_area;
 			write++;
 			break;
 		case 1:		/* read, present */
 			goto bad_area;
 		case 0:		/* read, not present */
-			if (!(vma->vm_flags & (VM_READ | VM_EXEC)))
+			if (!(vma->vm_flags & (VM_READ | VM_EXEC)))//没有可读或者执行标识
 				goto bad_area;
 	}
 
@@ -226,11 +226,11 @@ bad_area:
 
 bad_area_nosemaphore:
 	/* User mode accesses just cause a SIGSEGV */
-	if (error_code & 4) {
+	if (error_code & 4) {//用户模式
 		tsk->thread.cr2 = address;
 		tsk->thread.error_code = error_code;
 		tsk->thread.trap_no = 14;
-		info.si_signo = SIGSEGV;
+		info.si_signo = SIGSEGV;//设置软中断
 		info.si_errno = 0;
 		/* info.si_code has been set above */
 		info.si_addr = (void *)address;

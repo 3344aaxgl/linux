@@ -39,18 +39,18 @@ extern struct list_head inactive_dirty_list;
  * library, the executable area etc).
  */
 struct vm_area_struct {
-	struct mm_struct * vm_mm;	/* VM area parameters */
-	unsigned long vm_start;
-	unsigned long vm_end;
+	struct mm_struct * vm_mm;	/* VM area parameters *///每个进程一个mm_struct结构
+	unsigned long vm_start;   //虚存区间起始位置
+	unsigned long vm_end;     //虚存区间结束位置
 
 	/* linked list of VM areas per task, sorted by address */
-	struct vm_area_struct *vm_next;
+	struct vm_area_struct *vm_next;//同一个进程的虚存区间按内存地址从高到低次序连接到一起
 
-	pgprot_t vm_page_prot;
+	pgprot_t vm_page_prot;  //虚存区间的属性和访问权限
 	unsigned long vm_flags;
 
 	/* AVL tree of VM areas per task, sorted by address */
-	short vm_avl_height;
+	short vm_avl_height;   //将区间组成一棵AVL树
 	struct vm_area_struct * vm_avl_left;
 	struct vm_area_struct * vm_avl_right;
 
@@ -118,9 +118,9 @@ extern pgprot_t protection_map[16];
  * to the functions called when a no-page or a wp-page exception occurs. 
  */
 struct vm_operations_struct {
-	void (*open)(struct vm_area_struct * area);
-	void (*close)(struct vm_area_struct * area);
-	struct page * (*nopage)(struct vm_area_struct * area, unsigned long address, int write_access);
+	void (*open)(struct vm_area_struct * area);   //打开虚存
+	void (*close)(struct vm_area_struct * area);  //关闭虚存
+	struct page * (*nopage)(struct vm_area_struct * area, unsigned long address, int write_access);//建立映射
 };
 
 /*
@@ -491,14 +491,14 @@ static inline int expand_stack(struct vm_area_struct * vma, unsigned long addres
 	unsigned long grow;
 
 	address &= PAGE_MASK;
-	grow = (vma->vm_start - address) >> PAGE_SHIFT;
+	grow = (vma->vm_start - address) >> PAGE_SHIFT;    //要扩展多少个页
 	if (vma->vm_end - address > current->rlim[RLIMIT_STACK].rlim_cur ||
-	    ((vma->vm_mm->total_vm + grow) << PAGE_SHIFT) > current->rlim[RLIMIT_AS].rlim_cur)
+	    ((vma->vm_mm->total_vm + grow) << PAGE_SHIFT) > current->rlim[RLIMIT_AS].rlim_cur)//扩展后的空间是否超过用户空间堆栈大小限制，或者超过进程最大可用虚拟内存
 		return -ENOMEM;
-	vma->vm_start = address;
-	vma->vm_pgoff -= grow;
-	vma->vm_mm->total_vm += grow;
-	if (vma->vm_flags & VM_LOCKED)
+	vma->vm_start = address;   //更新虚存区起始位置
+	vma->vm_pgoff -= grow;     //映射的物理地址
+	vma->vm_mm->total_vm += grow;//进程总使用虚存
+	if (vma->vm_flags & VM_LOCKED)   //内存本身是锁住的，新扩展的空间也加锁
 		vma->vm_mm->locked_vm += grow;
 	return 0;
 }

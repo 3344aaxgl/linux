@@ -13,7 +13,7 @@ extern __inline__ pmd_t *get_pmd_fast(void)
 extern __inline__ void free_pmd_fast(pmd_t *pmd) { }
 extern __inline__ void free_pmd_slow(pmd_t *pmd) { }
 
-extern inline pmd_t * pmd_alloc(pgd_t *pgd, unsigned long address)
+extern inline pmd_t * pmd_alloc(pgd_t *pgd, unsigned long address)//两层映射没有pmd
 {
 	if (!pgd)
 		BUG();
