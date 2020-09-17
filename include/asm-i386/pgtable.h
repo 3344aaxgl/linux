@@ -334,8 +334,8 @@ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
 #define update_mmu_cache(vma,address,pte) do { } while (0)
 
 /* Encode and de-code a swap entry */
-#define SWP_TYPE(x)			(((x).val >> 1) & 0x3f)
-#define SWP_OFFSET(x)			((x).val >> 8)
+#define SWP_TYPE(x)			(((x).val >> 1) & 0x3f)    //7位为类型，表示哪个文件
+#define SWP_OFFSET(x)			((x).val >> 8)         //24位为偏移量，表示页面再一个磁盘设备或文件中的位置
 #define SWP_ENTRY(type, offset)		((swp_entry_t) { ((type) << 1) | ((offset) << 8) })
 #define pte_to_swp_entry(pte)		((swp_entry_t) { (pte).pte_low })
 #define swp_entry_to_pte(x)		((pte_t) { (x).val })

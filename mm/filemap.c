@@ -484,12 +484,12 @@ void add_to_page_cache_locked(struct page * page, struct address_space *mapping,
 	if (!PageLocked(page))
 		BUG();
 
-	page_cache_get(page);
+	page_cache_get(page);//增加使用计数
 	spin_lock(&pagecache_lock);
-	page->index = index;
-	add_page_to_inode_queue(mapping, page);
-	add_page_to_hash_queue(page, page_hash(mapping, index));
-	lru_cache_add(page);
+	page->index = index;//设置偏移量
+	add_page_to_inode_queue(mapping, page);//加入clean_pages队列
+	add_page_to_hash_queue(page, page_hash(mapping, index));//加入hash队列
+	lru_cache_add(page);//加入LRU队列active_list中
 	spin_unlock(&pagecache_lock);
 }
 

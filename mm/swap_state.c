@@ -58,11 +58,11 @@ void add_to_swap_cache(struct page *page, swp_entry_t entry)
 #ifdef SWAP_CACHE_INFO
 	swap_cache_add_total++;
 #endif
-	if (!PageLocked(page))
+	if (!PageLocked(page))//锁住页面
 		BUG();
-	if (PageTestandSetSwapCache(page))
+	if (PageTestandSetSwapCache(page))//设置PG_swap_cache为0
 		BUG();
-	if (page->mapping)
+	if (page->mapping)//
 		BUG();
 	flags = page->flags & ~((1 << PG_error) | (1 << PG_arch_1));
 	page->flags = flags | (1 << PG_uptodate);

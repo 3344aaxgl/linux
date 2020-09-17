@@ -363,8 +363,8 @@ struct address_space_operations {
 };
 
 struct address_space {
-	struct list_head	clean_pages;	/* list of clean pages */
-	struct list_head	dirty_pages;	/* list of dirty pages */
+	struct list_head	clean_pages;	/* list of clean pages *///干净页面
+	struct list_head	dirty_pages;	/* list of dirty pages *///脏页面
 	struct list_head	locked_pages;	/* list of locked pages */
 	unsigned long		nrpages;	/* number of total pages */
 	struct address_space_operations *a_ops;	/* methods */

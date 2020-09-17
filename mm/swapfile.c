@@ -20,9 +20,9 @@
 spinlock_t swaplock = SPIN_LOCK_UNLOCKED;
 unsigned int nr_swapfiles;
 
-struct swap_list_t swap_list = {-1, -1};
+struct swap_list_t swap_list = {-1, -1};  //页面交换设备队列，按优先级高低链接
 
-struct swap_info_struct swap_info[MAX_SWAPFILES];
+struct swap_info_struct swap_info[MAX_SWAPFILES]; // 页面交换设备数组
 
 #define SWAPFILE_CLUSTER 256
 
@@ -147,32 +147,32 @@ void __swap_free(swp_entry_t entry, unsigned short count)
 	struct swap_info_struct * p;
 	unsigned long offset, type;
 
-	if (!entry.val)
+	if (!entry.val)//页面0不用于页面交换
 		goto out;
 
-	type = SWP_TYPE(entry);
-	if (type >= nr_swapfiles)
+	type = SWP_TYPE(entry);   //页面交换设备的序号
+	if (type >= nr_swapfiles)//大于最大页面交换设备序号
 		goto bad_nofile;
 	p = & swap_info[type];
-	if (!(p->flags & SWP_USED))
+	if (!(p->flags & SWP_USED))//当前活跃的设备
 		goto bad_device;
-	offset = SWP_OFFSET(entry);
-	if (offset >= p->max)
+	offset = SWP_OFFSET(entry);//获得在页面中的位置
+	if (offset >= p->max) //超过设备最大页号
 		goto bad_offset;
-	if (!p->swap_map[offset])
+	if (!p->swap_map[offset])//无此物理页面
 		goto bad_free;
-	swap_list_lock();
-	if (p->prio > swap_info[swap_list.next].prio)
+	swap_list_lock();//对页面交换设备上锁
+	if (p->prio > swap_info[swap_list.next].prio)//设备优先级与第二个
 		swap_list.next = type;
 	swap_device_lock(p);
-	if (p->swap_map[offset] < SWAP_MAP_MAX) {
-		if (p->swap_map[offset] < count)
+	if (p->swap_map[offset] < SWAP_MAP_MAX) {//不能超过最大引用数
+		if (p->swap_map[offset] < count)//引用计数错误
 			goto bad_count;
-		if (!(p->swap_map[offset] -= count)) {
-			if (offset < p->lowest_bit)
-				p->lowest_bit = offset;
+		if (!(p->swap_map[offset] -= count)) {//减去引用计数后为0
+			if (offset < p->lowest_bit)//位置小于起始位置
+				p->lowest_bit = offset;//更新第一个可用槽位
 			if (offset > p->highest_bit)
-				p->highest_bit = offset;
+				p->highest_bit = offset;//更新最后一个可用槽位
 			nr_swap_pages++;
 		}
 	}

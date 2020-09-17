@@ -147,7 +147,7 @@ typedef struct page {
 	struct zone_struct *zone;
 } mem_map_t;
 
-#define get_page(p)		atomic_inc(&(p)->count)
+#define get_page(p)		atomic_inc(&(p)->count)//使用计数+1
 #define put_page(p)		__free_page(p)
 #define put_page_testzero(p) 	atomic_dec_and_test(&(p)->count)
 #define page_count(p)		atomic_read(&(p)->count)

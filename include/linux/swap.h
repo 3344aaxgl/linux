@@ -52,14 +52,14 @@ struct swap_info_struct {
 	spinlock_t sdev_lock;
 	struct dentry * swap_file;
 	struct vfsmount *swap_vfsmnt;
-	unsigned short * swap_map;
-	unsigned int lowest_bit;
-	unsigned int highest_bit;
+	unsigned short * swap_map;   //下标为盘上页面在当前交换文件内的索引，值为盘上页面的引用计数
+	unsigned int lowest_bit;   //供页面交换使用的起始位置
+	unsigned int highest_bit;  //供页面交换使用的结束位置
 	unsigned int cluster_next;
 	unsigned int cluster_nr;
 	int prio;			/* swap priority */
-	int pages;
-	unsigned long max;
+	int pages;    //表示该页面交换设备或文件的大小
+	unsigned long max;  //最大页号
 	int next;			/* next entry on swap list */
 };
 
