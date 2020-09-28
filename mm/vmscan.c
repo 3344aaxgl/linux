@@ -776,8 +776,8 @@ int free_shortage(void)
 {
 	pg_data_t *pgdat = pgdat_list;
 	int sum = 0;
-	int freeable = nr_free_pages() + nr_inactive_clean_pages();
-	int freetarget = freepages.high + inactive_target / 3;
+	int freeable = nr_free_pages() + nr_inactive_clean_pages();//空闲页面+干净页面
+	int freetarget = freepages.high + inactive_target / 3;//理论空闲
 
 	/* Are we low on free pages globally? */
 	if (freeable < freetarget)
@@ -789,7 +789,7 @@ int free_shortage(void)
 		for(i = 0; i < MAX_NR_ZONES; i++) {
 			zone_t *zone = pgdat->node_zones+ i;
 			if (zone->size && (zone->inactive_clean_pages +
-					zone->free_pages < zone->pages_min+1)) {
+					zone->free_pages < zone->pages_min+1)) {//空闲页面+干净不活跃页面是否小于最低水准
 				/* + 1 to have overlap with alloc_pages() !! */
 				sum += zone->pages_min + 1;
 				sum -= zone->free_pages;
@@ -809,11 +809,11 @@ int inactive_shortage(void)
 {
 	int shortage = 0;
 
-	shortage += freepages.high;
-	shortage += inactive_target;
-	shortage -= nr_free_pages();
-	shortage -= nr_inactive_clean_pages();
-	shortage -= nr_inactive_dirty_pages;
+	shortage += freepages.high;//需要开始进行页面交换的空闲页面数量
+	shortage += inactive_target;//不活跃页面的数目
+	shortage -= nr_free_pages();//空闲页面
+	shortage -= nr_inactive_clean_pages();//不活跃干净页面
+	shortage -= nr_inactive_dirty_pages;//不活跃脏页
 
 	if (shortage > 0)
 		return shortage;

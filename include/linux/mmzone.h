@@ -16,7 +16,7 @@
 
 typedef struct free_area_struct {
 	struct list_head	free_list;
-	unsigned int		*map;
+	unsigned int		*map;//使用位图
 } free_area_t;
 
 struct pglist_data;

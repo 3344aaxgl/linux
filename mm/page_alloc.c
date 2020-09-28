@@ -52,7 +52,7 @@ struct list_head inactive_dirty_list;
 /*
  * Temporary debugging check.
  */
-#define BAD_RANGE(zone,x) (((zone) != (x)->zone) || (((x)-mem_map) < (zone)->offset) || (((x)-mem_map) >= (zone)->offset+(zone)->size))
+#define BAD_RANGE(zone,x) (((zone) != (x)->zone) || (((x)-mem_map) < (zone)->offset) || (((x)-mem_map) >= (zone)->offset+(zone)->size))//offset为该分区在mem_map中的起始页号
 
 /*
  * Buddy system. Hairy. You really aren't expected to understand this
@@ -150,17 +150,17 @@ static void __free_pages_ok (struct page *page, unsigned long order)
 static inline struct page * expand (zone_t *zone, struct page *page,
 	 unsigned long index, int low, int high, free_area_t * area)
 {
-	unsigned long size = 1 << high;
+	unsigned long size = 1 << high;//整页的大小
 
-	while (high > low) {
+	while (high > low) {//如果要分配的order比当前的order小，将当前的page不断拆分
 		if (BAD_RANGE(zone,page))
 			BUG();
-		area--;
+		area--;//上一级的空闲区
 		high--;
-		size >>= 1;
-		memlist_add_head(&(page)->list, &(area)->free_list);
-		MARK_USED(index, high, area);
-		index += size;
+		size >>= 1;//大小除2
+		memlist_add_head(&(page)->list, &(area)->free_list);//将page添加到上一级free_list
+		MARK_USED(index, high, area);//标记伙伴位已占用
+		index += size;//索引增加到分配区的中间位置
 		page += size;
 	}
 	if (BAD_RANGE(zone,page))
@@ -171,7 +171,7 @@ static inline struct page * expand (zone_t *zone, struct page *page,
 static FASTCALL(struct page * rmqueue(zone_t *zone, unsigned long order));
 static struct page * rmqueue(zone_t *zone, unsigned long order)
 {
-	free_area_t * area = zone->free_area + order;
+	free_area_t * area = zone->free_area + order;//先找到对应的空闲区
 	unsigned long curr_order = order;
 	struct list_head *head, *curr;
 	unsigned long flags;
@@ -179,19 +179,19 @@ static struct page * rmqueue(zone_t *zone, unsigned long order)
 
 	spin_lock_irqsave(&zone->lock, flags);
 	do {
-		head = &area->free_list;
+		head = &area->free_list;//空闲内存块链表
 		curr = memlist_next(head);
 
-		if (curr != head) {
+		if (curr != head) {//说明有空闲空间
 			unsigned int index;
 
-			page = memlist_entry(curr, struct page, list);
-			if (BAD_RANGE(zone,page))
+			page = memlist_entry(curr, struct page, list);//得到cur指向元素的page地址
+			if (BAD_RANGE(zone,page))//page地址不在zone内
 				BUG();
-			memlist_del(curr);
-			index = (page - mem_map) - zone->offset;
-			MARK_USED(index, curr_order, area);
-			zone->free_pages -= 1 << order;
+			memlist_del(curr);//从链表中删除
+			index = (page - mem_map) - zone->offset;//内存块在所在内存管理区的索引
+			MARK_USED(index, curr_order, area);//设置已使用标识
+			zone->free_pages -= 1 << order;//空闲页数减少要分配的数目
 
 			page = expand(zone, page, index, order, curr_order, area);
 			spin_unlock_irqrestore(&zone->lock, flags);
@@ -224,7 +224,7 @@ static struct page * __alloc_pages_limit(zonelist_t *zonelist,
 {
 	zone_t **zone = zonelist->zones;
 
-	for (;;) {
+	for (;;) {//遍历所有区
 		zone_t *z = *(zone++);
 		unsigned long water_mark;
 
@@ -249,14 +249,14 @@ static struct page * __alloc_pages_limit(zonelist_t *zonelist,
 				water_mark = z->pages_high;
 		}
 
-		if (z->free_pages + z->inactive_clean_pages > water_mark) {
+		if (z->free_pages + z->inactive_clean_pages > water_mark) {//空闲页面+干净页面
 			struct page *page = NULL;
 			/* If possible, reclaim a page directly. */
 			if (direct_reclaim && z->free_pages < z->pages_min + 8)
-				page = reclaim_page(z);
+				page = reclaim_page(z);//回收页面
 			/* If that fails, fall back to rmqueue. */
 			if (!page)
-				page = rmqueue(z, order);
+				page = rmqueue(z, order);//进行分配
 			if (page)
 				return page;
 		}
@@ -274,7 +274,7 @@ struct page * __alloc_pages(zonelist_t *zonelist, unsigned long order)
 {
 	zone_t **zone;
 	int direct_reclaim = 0;
-	unsigned int gfp_mask = zonelist->gfp_mask;
+	unsigned int gfp_mask = zonelist->gfp_mask;//分配策略
 	struct page * page;
 
 	/*
@@ -295,15 +295,15 @@ struct page * __alloc_pages(zonelist_t *zonelist, unsigned long order)
 	 * list?
 	 */
 	if (order == 0 && (gfp_mask & __GFP_WAIT) &&
-			!(current->flags & PF_MEMALLOC))
-		direct_reclaim = 1;
+			!(current->flags & PF_MEMALLOC))//分配单个页面，等待分配完成，不是用于管理目的
+		direct_reclaim = 1;//可以从相应管理区的“不活跃干净”缓冲队列中回收
 
 	/*
 	 * If we are about to get low on free pages and we also have
 	 * an inactive page shortage, wake up kswapd.
 	 */
-	if (inactive_shortage() > inactive_target / 2 && free_shortage())
-		wakeup_kswapd(0);
+	if (inactive_shortage() > inactive_target / 2 && free_shortage())//页面短缺
+		wakeup_kswapd(0);//启动kswapd线程
 	/*
 	 * If we are about to get low on free pages and cleaning
 	 * the inactive_dirty pages would fix the situation,
@@ -311,7 +311,7 @@ struct page * __alloc_pages(zonelist_t *zonelist, unsigned long order)
 	 */
 	else if (free_shortage() && nr_inactive_dirty_pages > free_shortage()
 			&& nr_inactive_dirty_pages >= freepages.high)
-		wakeup_bdflush(0);
+		wakeup_bdflush(0);//启动bdflush线程
 
 try_again:
 	/*
@@ -328,11 +328,11 @@ try_again:
 		if (!z->size)
 			BUG();
 
-		if (z->free_pages >= z->pages_low) {
-			page = rmqueue(z, order);
+		if (z->free_pages >= z->pages_low) {//空闲页数尚在低水平上
+			page = rmqueue(z, order);//分配页面
 			if (page)
 				return page;
-		} else if (z->free_pages < z->pages_min &&
+		} else if (z->free_pages < z->pages_min &&//已经降到最低点
 					waitqueue_active(&kreclaimd_wait)) {
 				wake_up_interruptible(&kreclaimd_wait);
 		}
@@ -379,11 +379,11 @@ try_again:
 	 * - if we don't have __GFP_IO set, kswapd may be
 	 *   able to free some memory we can't free ourselves
 	 */
-	wakeup_kswapd(0);
+	wakeup_kswapd(0);//唤醒kswapd线程
 	if (gfp_mask & __GFP_WAIT) {
 		__set_current_state(TASK_RUNNING);
-		current->policy |= SCHED_YIELD;
-		schedule();
+		current->policy |= SCHED_YIELD;//将当前线程移到任务队列最后，让位给其他优先级高的任务
+		schedule();//调用其他任务
 	}
 
 	/*
@@ -393,7 +393,7 @@ try_again:
 	 * Kswapd should, in most situations, bring the situation
 	 * back to normal in no time.
 	 */
-	page = __alloc_pages_limit(zonelist, order, PAGES_MIN, direct_reclaim);
+	page = __alloc_pages_limit(zonelist, order, PAGES_MIN, direct_reclaim);//再次进行分配
 	if (page)
 		return page;
 
@@ -406,7 +406,7 @@ try_again:
 	 * - we're /really/ tight on memory
 	 * 	--> wait on the kswapd waitqueue until memory is freed
 	 */
-	if (!(current->flags & PF_MEMALLOC)) {
+	if (!(current->flags & PF_MEMALLOC)) {//一般进程
 		/*
 		 * Are we dealing with a higher order allocation?
 		 *
@@ -414,11 +414,11 @@ try_again:
 		 * in the hope of creating a large, physically contiguous
 		 * piece of free memory.
 		 */
-		if (order > 0 && (gfp_mask & __GFP_WAIT)) {
+		if (order > 0 && (gfp_mask & __GFP_WAIT)) {//分配多余1个页面，且等待直到分配成功
 			zone = zonelist->zones;
 			/* First, clean some dirty pages. */
 			current->flags |= PF_MEMALLOC;
-			page_launder(gfp_mask, 1);
+			page_launder(gfp_mask, 1);//把脏页洗干净
 			current->flags &= ~PF_MEMALLOC;
 			for (;;) {
 				zone_t *z = *(zone++);
@@ -429,12 +429,12 @@ try_again:
 				while (z->inactive_clean_pages) {
 					struct page * page;
 					/* Move one page to the free list. */
-					page = reclaim_page(z);
+					page = reclaim_page(z);回收页面
 					if (!page)
 						break;
-					__free_page(page);
+					__free_page(page);//拼接空闲页面
 					/* Try if the allocation succeeds. */
-					page = rmqueue(z, order);
+					page = rmqueue(z, order);//尝试分配
 					if (page)
 						return page;
 				}
@@ -456,7 +456,7 @@ try_again:
 		if ((gfp_mask & (__GFP_WAIT|__GFP_IO)) == (__GFP_WAIT|__GFP_IO)) {
 			wakeup_kswapd(1);
 			memory_pressure++;
-			if (!order)
+			if (!order)//分配单个页面，再试一次
 				goto try_again;
 		/*
 		 * If __GFP_IO isn't set, we can't wait on kswapd because
@@ -508,9 +508,9 @@ try_again:
 
 		/* XXX: is pages_min/4 a good amount to reserve for this? */
 		if (z->free_pages < z->pages_min / 4 &&
-				!(current->flags & PF_MEMALLOC))
+				!(current->flags & PF_MEMALLOC))//空闲页面数小于最小pages_min的1/4且非公务
 			continue;
-		page = rmqueue(z, order);
+		page = rmqueue(z, order);//再次进行分配
 		if (page)
 			return page;
 	}
@@ -579,7 +579,7 @@ unsigned int nr_free_pages (void)
 			sum += zone->free_pages;
 		pgdat = pgdat->node_next;
 	}
-	return sum;
+	return sum;//三个区的空闲页面
 }
 
 /*
@@ -597,7 +597,7 @@ unsigned int nr_inactive_clean_pages (void)
 			sum += zone->inactive_clean_pages;
 		pgdat = pgdat->node_next;
 	}
-	return sum;
+	return sum;//三个区的不活跃干净页面
 }
 
 /*

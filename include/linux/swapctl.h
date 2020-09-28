@@ -16,9 +16,9 @@ extern buffer_mem_t page_cache;
 
 typedef struct freepages_v1
 {
-	unsigned int	min;
-	unsigned int	low;
-	unsigned int	high;
+	unsigned int	min;//用于不能低于这个数量
+	unsigned int	low;//低于这个数量进行密集交换
+	unsigned int	high;//低于这个数量进行后台页面交换
 } freepages_v1;
 typedef freepages_v1 freepages_t;
 extern freepages_t freepages;
