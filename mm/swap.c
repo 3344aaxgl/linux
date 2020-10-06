@@ -91,11 +91,11 @@ void age_page_up_nolock(struct page * page)
 	 * We're dealing with an inactive page, move the page
 	 * to the active list.
 	 */
-	if (!page->age)
-		activate_page_nolock(page);
+	if (!page->age)//还有寿命
+		activate_page_nolock(page);//添加到活跃页链表
 
 	/* The actual page aging bit */
-	page->age += PAGE_AGE_ADV;
+	page->age += PAGE_AGE_ADV;//添加寿命
 	if (page->age > PAGE_AGE_MAX)
 		page->age = PAGE_AGE_MAX;
 }
@@ -173,8 +173,8 @@ void deactivate_page_nolock(struct page * page)
 	 * inactive_clean list it doesn't need to be perfect...
 	 */
 	int maxcount = (page->buffers ? 3 : 2);
-	page->age = 0;
-	ClearPageReferenced(page);
+	page->age = 0;//寿命置0
+	ClearPageReferenced(page);//清除使用标记
 
 	/*
 	 * Don't touch it if it's not on the active list.
@@ -182,7 +182,7 @@ void deactivate_page_nolock(struct page * page)
 	 */
 	if (PageActive(page) && page_count(page) <= maxcount && !page_ramdisk(page)) {
 		del_page_from_active_list(page);
-		add_page_to_inactive_dirty_list(page);
+		add_page_to_inactive_dirty_list(page);//添加到不活跃脏页链表
 	}
 }	
 
@@ -198,10 +198,10 @@ void deactivate_page(struct page * page)
  */
 void activate_page_nolock(struct page * page)
 {
-	if (PageInactiveDirty(page)) {
-		del_page_from_inactive_dirty_list(page);
-		add_page_to_active_list(page);
-	} else if (PageInactiveClean(page)) {
+	if (PageInactiveDirty(page)) {//不活跃脏页
+		del_page_from_inactive_dirty_list(page);//从不活跃脏页链表中删除
+		add_page_to_active_list(page);//添加到活跃链表中
+	} else if (PageInactiveClean(page)) {//不活跃干净页
 		del_page_from_inactive_clean_list(page);
 		add_page_to_active_list(page);
 	} else {
@@ -297,7 +297,7 @@ void __init swap_setup(void)
 {
 	/* Use a smaller cluster for memory <16MB or <32MB */
 	if (num_physpages < ((16 * 1024 * 1024) >> PAGE_SHIFT))
-		page_cluster = 2;
+		page_cluster = 2;//一次预读4个页面
 	else if (num_physpages < ((32 * 1024 * 1024) >> PAGE_SHIFT))
 		page_cluster = 3;
 	else

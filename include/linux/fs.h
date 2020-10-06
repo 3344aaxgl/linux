@@ -367,7 +367,7 @@ struct address_space {
 	struct list_head	dirty_pages;	/* list of dirty pages *///脏页面
 	struct list_head	locked_pages;	/* list of locked pages */
 	unsigned long		nrpages;	/* number of total pages */
-	struct address_space_operations *a_ops;	/* methods */
+	struct address_space_operations *a_ops;	/* methods *///页面操作方法
 	struct inode		*host;		/* owner: inode, block_device */
 	struct vm_area_struct	*i_mmap;	/* list of private mappings */
 	struct vm_area_struct	*i_mmap_shared; /* list of shared mappings */
