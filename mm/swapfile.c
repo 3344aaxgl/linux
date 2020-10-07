@@ -831,23 +831,23 @@ int swap_duplicate(swp_entry_t entry)
 	int result = 0;
 
 	/* Swap entry 0 is illegal */
-	if (!entry.val)
+	if (!entry.val)//最高24位位设备上的页面序号，低7位为交换设备本身的序号，最后一位为0
 		goto out;
 	type = SWP_TYPE(entry);
-	if (type >= nr_swapfiles)
+	if (type >= nr_swapfiles)//超过交换设备个数
 		goto bad_file;
-	p = type + swap_info;
-	offset = SWP_OFFSET(entry);
+	p = type + swap_info;//得到地址
+	offset = SWP_OFFSET(entry);//得到在设备上的页面序号
 	if (offset >= p->max)
 		goto bad_offset;
-	if (!p->swap_map[offset])
+	if (!p->swap_map[offset])//得到共享计数
 		goto bad_unused;
 	/*
 	 * Entry is valid, so increment the map count.
 	 */
 	swap_device_lock(p);
 	if (p->swap_map[offset] < SWAP_MAP_MAX)
-		p->swap_map[offset]++;
+		p->swap_map[offset]++;//增加引用计数
 	else {
 		static int overflow = 0;
 		if (overflow++ < 5)

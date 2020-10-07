@@ -172,7 +172,7 @@ void deactivate_page_nolock(struct page * page)
 	 * Besides, as long as we don't move unfreeable pages to the
 	 * inactive_clean list it doesn't need to be perfect...
 	 */
-	int maxcount = (page->buffers ? 3 : 2);
+	int maxcount = (page->buffers ? 3 : 2);//分配页面时将count设置为1，后续每增一个用户+1如果是通过mmap映射到普通文件，buffers指向一个buffer_head数据队列
 	page->age = 0;//寿命置0
 	ClearPageReferenced(page);//清除使用标记
 
@@ -180,9 +180,9 @@ void deactivate_page_nolock(struct page * page)
 	 * Don't touch it if it's not on the active list.
 	 * (some pages aren't on any list at all)
 	 */
-	if (PageActive(page) && page_count(page) <= maxcount && !page_ramdisk(page)) {
+	if (PageActive(page) && page_count(page) <= maxcount && !page_ramdisk(page)) {//ramdisk一部分内存模拟磁盘
 		del_page_from_active_list(page);
-		add_page_to_inactive_dirty_list(page);//添加到不活跃脏页链表
+		add_page_to_inactive_dirty_list(page);//添加到不活跃脏页链表,只有一个不活跃脏链表，每个页面管理区都有一个不活跃干净链表
 	}
 }	
 

@@ -81,7 +81,7 @@ static int try_to_swap_out(struct mm_struct * mm, struct vm_area_struct* vma, un
 	 * bits in hardware.
 	 */
 	pte = ptep_get_and_clear(page_table);//清空
-	flush_tlb_page(vma, address);//进行flash操作
+	flush_tlb_page(vma, address);//从tlb中删除
 
 	/*
 	 * Is the page already in the swap cache? If so, then
@@ -91,18 +91,18 @@ static int try_to_swap_out(struct mm_struct * mm, struct vm_area_struct* vma, un
 	 * Return 0, as we didn't actually free any real
 	 * memory, and we should just continue our scan.
 	 */
-	if (PageSwapCache(page)) {
+	if (PageSwapCache(page)) {//是否分配了swap空间
 		entry.val = page->index;
-		if (pte_dirty(pte))
+		if (pte_dirty(pte))//脏页
 			set_page_dirty(page);
 set_swap_pte:
-		swap_duplicate(entry);
-		set_pte(page_table, swp_entry_to_pte(entry));
+		swap_duplicate(entry);//增加引用计数
+		set_pte(page_table, swp_entry_to_pte(entry));//设置PTE的值
 drop_pte:
-		UnlockPage(page);
-		mm->rss--;
-		deactivate_page(page);
-		page_cache_release(page);
+		UnlockPage(page);//释放页面
+		mm->rss--;//驻内存页面集合少一个页面
+		deactivate_page(page);//转移到不活跃脏链表
+		page_cache_release(page);//减少引用计数，达到0则释放
 out_failed:
 		return 0;
 	}
@@ -121,7 +121,7 @@ out_failed:
 	 * some real work in the future in "refill_inactive()".
 	 */
 	flush_cache_page(vma, address);
-	if (!pte_dirty(pte))
+	if (!pte_dirty(pte))//是否是脏页
 		goto drop_pte;
 
 	/*
@@ -130,7 +130,7 @@ out_failed:
 	 * entry for it, or we should write it back
 	 * to its own backing store.
 	 */
-	if (page->mapping) {
+	if (page->mapping) {//通过mmap建立的文件映射
 		set_page_dirty(page);
 		goto drop_pte;
 	}
@@ -141,12 +141,12 @@ out_failed:
 	 * we have the swap cache set up to associate the
 	 * page with that swap entry.
 	 */
-	entry = get_swap_page();
+	entry = get_swap_page();//从交换设备分配一个页面
 	if (!entry.val)
 		goto out_unlock_restore; /* No swap space left */
 
 	/* Add it to the swap cache and mark it dirty */
-	add_to_swap_cache(page, entry);
+	add_to_swap_cache(page, entry);//链入swapper_space队列，活跃队列中
 	set_page_dirty(page);
 	goto set_swap_pte;
 
@@ -414,7 +414,7 @@ struct page * reclaim_page(zone_t * zone)
 
 		/* Page is or was in use?  Move it to the active list. */
 		if (PageTestandClearReferenced(page) || page->age > 0 ||
-				(!page->buffers && page_count(page) > 1)) {
+				(!page->buffers && page_count(page) > 1)) {//使用中
 			del_page_from_inactive_clean_list(page);
 			add_page_to_active_list(page);
 			continue;
@@ -428,12 +428,12 @@ struct page * reclaim_page(zone_t * zone)
 		}
 
 		/* OK, remove the page from the caches. */
-                if (PageSwapCache(page)) {
-			__delete_from_swap_cache(page);
+                if (PageSwapCache(page)) {//分配了swap空间
+			__delete_from_swap_cache(page);//从交换空间中删除
 			goto found_page;
 		}
 
-		if (page->mapping) {
+		if (page->mapping) {//mmap分配的空间
 			__remove_inode_page(page);
 			goto found_page;
 		}
@@ -855,7 +855,7 @@ static int refill_inactive(unsigned int gfp_mask, int user)
 			schedule();//让出
 		}
 
-		while (refill_inactive_scan(priority, 1)) {//扫描活跃队列，找到可以转入不活跃状态的页面
+		while (refill_inactive_scan(priority, 1)) {//扫描全局的活跃队列，找到可以转入不活跃状态的页面
 			made_progress = 1;
 			if (--count <= 0)
 				goto done;
@@ -872,7 +872,7 @@ static int refill_inactive(unsigned int gfp_mask, int user)
 		/*
 		 * Then, try to page stuff out..
 		 */
-		while (swap_out(priority, gfp_mask)) {
+		while (swap_out(priority, gfp_mask)) {//选rss大的进程，扫描其页面映射表，找出其中可以转入不活跃状态的页面
 			made_progress = 1;
 			if (--count <= 0)
 				goto done;
@@ -927,14 +927,14 @@ static int do_try_to_free_pages(unsigned int gfp_mask, int user)
 	 * the inode and dentry cache whenever we do this.
 	 */
 	if (free_shortage() || inactive_shortage()) {//检查是否空闲页短缺或不活跃页短缺
-		shrink_dcache_memory(6, gfp_mask);
-		shrink_icache_memory(6, gfp_mask);
+		shrink_dcache_memory(6, gfp_mask);//回收目录项dentry的数据结构
+		shrink_icache_memory(6, gfp_mask);//回收inode的数据结构
 		ret += refill_inactive(gfp_mask, user);
 	} else {
 		/*
 		 * Reclaim unused slab cache memory.
 		 */
-		kmem_cache_reap(gfp_mask);
+		kmem_cache_reap(gfp_mask);//回收slab内存
 		ret = 1;
 	}
 
@@ -994,7 +994,7 @@ int kswapd(void *unused)
 			/* Do we need to do some synchronous flushing? */
 			if (waitqueue_active(&kswapd_done))//检查kswapd_done队列是否为空
 				wait = 1;
-			do_try_to_free_pages(GFP_KSWAPD, wait);
+			do_try_to_free_pages(GFP_KSWAPD, wait);//
 		}
 
 		/*
@@ -1041,7 +1041,7 @@ int kswapd(void *unused)
 		 * and try free some more memory...
 		 */
 		} else if (out_of_memory()) {
-			oom_kill();
+			oom_kill();//杀死一个进程
 		}
 	}
 }
@@ -1132,7 +1132,7 @@ int kreclaimd(void *unused)
 
 				while (zone->free_pages < zone->pages_low) {
 					struct page * page;
-					page = reclaim_page(zone);
+					page = reclaim_page(zone);//转移到不活跃干净页链表
 					if (!page)
 						break;
 					__free_page(page);

@@ -266,7 +266,7 @@ extern void __handle_bad_pmd_kernel(pmd_t * pmd);
  */
 static inline int pte_read(pte_t pte)		{ return (pte).pte_low & _PAGE_USER; }
 static inline int pte_exec(pte_t pte)		{ return (pte).pte_low & _PAGE_USER; }
-static inline int pte_dirty(pte_t pte)		{ return (pte).pte_low & _PAGE_DIRTY; }//该页面是藏的
+static inline int pte_dirty(pte_t pte)		{ return (pte).pte_low & _PAGE_DIRTY; }//该页面是脏的
 static inline int pte_young(pte_t pte)		{ return (pte).pte_low & _PAGE_ACCESSED; }//该页刚被使用过
 static inline int pte_write(pte_t pte)		{ return (pte).pte_low & _PAGE_RW; }//该页面是可写的
 
