@@ -1019,13 +1019,13 @@ static int do_swap_page(struct mm_struct * mm,
 	struct vm_area_struct * vma, unsigned long address,
 	pte_t * page_table, swp_entry_t entry, int write_access)
 {
-	struct page *page = lookup_swap_cache(entry);
+	struct page *page = lookup_swap_cache(entry);//在交换区寻找
 	pte_t pte;
 
 	if (!page) {
 		lock_kernel();
-		swapin_readahead(entry);
-		page = read_swap_cache(entry);
+		swapin_readahead(entry);//预读
+		page = read_swap_cache(entry);//
 		unlock_kernel();
 		if (!page)
 			return -1;
@@ -1036,7 +1036,7 @@ static int do_swap_page(struct mm_struct * mm,
 
 	mm->rss++;
 
-	pte = mk_pte(page, vma->vm_page_prot);
+	pte = mk_pte(page, vma->vm_page_prot);//创建页表项
 
 	/*
 	 * Freeze the "shared"ness of the page, ie page_count + swap_count.
@@ -1046,7 +1046,7 @@ static int do_swap_page(struct mm_struct * mm,
 	lock_page(page);
 	swap_free(entry);
 	if (write_access && !is_page_shared(page))
-		pte = pte_mkwrite(pte_mkdirty(pte));
+		pte = pte_mkwrite(pte_mkdirty(pte));//设置写标识和脏标识
 	UnlockPage(page);
 
 	set_pte(page_table, pte);
@@ -1171,7 +1171,7 @@ static inline int handle_pte_fault(struct mm_struct *mm,
 		spin_unlock(&mm->page_table_lock);
 		if (pte_none(entry))//已经分配页表项
 			return do_no_page(mm, vma, address, write_access, pte);
-		return do_swap_page(mm, vma, address, pte, pte_to_swp_entry(entry), write_access);
+		return do_swap_page(mm, vma, address, pte, pte_to_swp_entry(entry), write_access);//在缓冲区
 	}
 
 	if (write_access) {

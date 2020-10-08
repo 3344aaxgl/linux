@@ -169,7 +169,7 @@ struct page * lookup_swap_cache(swp_entry_t entry)
 		 * Right now the pagecache is 32-bit only.  But it's a 32 bit index. =)
 		 */
 repeat:
-		found = find_lock_page(&swapper_space, entry.val);
+		found = find_lock_page(&swapper_space, entry.val);//是否还在swapper_space中
 		if (!found)
 			return 0;
 		/*
@@ -223,7 +223,7 @@ struct page * read_swap_cache_async(swp_entry_t entry, int wait)
 	/*
 	 * Look for the page in the swap cache.
 	 */
-	found_page = lookup_swap_cache(entry);
+	found_page = lookup_swap_cache(entry);//swapin_readahead已经把目标页读取进来
 	if (found_page)
 		goto out_free_swap;
 
@@ -235,14 +235,14 @@ struct page * read_swap_cache_async(swp_entry_t entry, int wait)
 	/*
 	 * Check the swap cache again, in case we stalled above.
 	 */
-	found_page = lookup_swap_cache(entry);
+	found_page = lookup_swap_cache(entry);//分配页面过程可能有其他进程把这个页面读进来
 	if (found_page)
 		goto out_free_page;
 	/* 
 	 * Add it to the swap cache and read its contents.
 	 */
 	lock_page(new_page);
-	add_to_swap_cache(new_page, entry);
+	add_to_swap_cache(new_page, entry);//将新分配的页面挂入swapper_space及活动页面链表
 	rw_swap_page(READ, new_page, wait);
 	return new_page;
 

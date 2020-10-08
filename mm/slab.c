@@ -182,7 +182,7 @@ struct kmem_cache_s {
 /* 1) each alloc & free */
 	/* full, partial first, then free */
 	struct list_head	slabs;
-	struct list_head	*firstnotfull;
+	struct list_head	*firstnotfull;//第一个含有空闲对象的slab
 	unsigned int		objsize;
 	unsigned int	 	flags;	/* constant flags */
 	unsigned int		num;	/* # of objs per slab */
@@ -206,10 +206,10 @@ struct kmem_cache_s {
 	unsigned int		dflags;		/* dynamic flags */
 
 	/* constructor func */
-	void (*ctor)(void *, kmem_cache_t *, unsigned long);
+	void (*ctor)(void *, kmem_cache_t *, unsigned long);//构造函数
 
 	/* de-constructor func */
-	void (*dtor)(void *, kmem_cache_t *, unsigned long);
+	void (*dtor)(void *, kmem_cache_t *, unsigned long);//析构函数
 
 	unsigned long		failures;
 
@@ -1255,7 +1255,7 @@ static inline void * kmem_cache_alloc_one_tail (kmem_cache_t *cachep,
 	/* Get slab alloc is to come from. */			\
 	{							\
 		struct list_head* p = cachep->firstnotfull;	\
-		if (p == &cachep->slabs)			\
+		if (p == &cachep->slabs)			\//没有空闲对象
 			goto alloc_new_slab;			\
 		slabp = list_entry(p,slab_t, list);	\
 	}							\
