@@ -1218,13 +1218,13 @@ static inline void * kmem_cache_alloc_one_tail (kmem_cache_t *cachep,
 	STATS_SET_HIGH(cachep);
 
 	/* get obj pointer */
-	slabp->inuse++;
-	objp = slabp->s_mem + slabp->free*cachep->objsize;
-	slabp->free=slab_bufctl(slabp)[slabp->free];
+	slabp->inuse++;//使用中的个数
+	objp = slabp->s_mem + slabp->free*cachep->objsize;//得到空闲空间的地址
+	slabp->free=slab_bufctl(slabp)[slabp->free];//更新空闲下标
 
-	if (slabp->free == BUFCTL_END)
+	if (slabp->free == BUFCTL_END)//没有空闲空间了
 		/* slab now full: move to next slab for next alloc */
-		cachep->firstnotfull = slabp->list.next;
+		cachep->firstnotfull = slabp->list.next;//指向下一个slab
 #if DEBUG
 	if (cachep->flags & SLAB_POISON)
 		if (kmem_check_poison_obj(cachep, objp))
